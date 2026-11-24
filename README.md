@@ -1,6 +1,6 @@
 # Homebears for Home Assistant
 
-[![HACS Custom](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://hacs.xyz/docs/faq/custom_repositories)
+[![HACS Default](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://hacs.xyz)
 [![Validate](https://github.com/fuerst-one/homebears-ha/actions/workflows/validate.yml/badge.svg)](https://github.com/fuerst-one/homebears-ha/actions/workflows/validate.yml)
 
 Brings your [Homebears](https://homebears.app) shopping lists and chores into Home Assistant:
@@ -17,8 +17,14 @@ You never have to look up an id: setup lists your circles, lists and households 
 
 ### HACS (recommended)
 
-1. HACS → ⋮ → **Custom repositories** → add `https://github.com/fuerst-one/homebears-ha`, type **Integration**.
-2. Search for **Homebears**, download it and restart Home Assistant.
+[![Open your Home Assistant instance and open the Homebears repository in HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=fuerst-one&repository=homebears-ha&category=integration)
+
+1. In HACS, search for **Homebears** (or use the button above).
+2. Download it and restart Home Assistant.
+
+If Homebears doesn't show up in the search (for example on an older HACS version), add it as a custom repository
+instead: HACS → ⋮ → **Custom repositories** → add `https://github.com/fuerst-one/homebears-ha`, type
+**Integration**, then continue with step 2.
 
 ### Manually
 

@@ -1,6 +1,7 @@
 {
   "domain": "homebears",
   "name": "Homebears",
+  "categories": ["productivity_information.shopping_groceries", "productivity_information.calendars_todos"],
   "codeowners": ["@fuerst-one"],
   "config_flow": true,
   "documentation": "https://github.com/fuerst-one/homebears-ha",
