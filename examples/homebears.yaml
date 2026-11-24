@@ -1,0 +1,161 @@
+# Homebears + Home Assistant — save as config/packages/homebears.yaml
+# Replace CIRCLE_ID, LIST_ID, HOUSEHOLD_ID, LAUNDRY_TASK_ID and VACUUM_TASK_ID with your own ids.
+# secrets.yaml: homebears_authorization: "Bearer hb_…"
+
+rest_command:
+  homebears_add_item:
+    url: "https://api.homebears.app/api/v1/circles/CIRCLE_ID/shopping-lists/LIST_ID/items"
+    method: post
+    headers:
+      Authorization: !secret homebears_authorization
+      Accept: application/json
+    content_type: application/json
+    payload: >-
+      {% set body = {'name': item} %}
+      {% if quantity is defined and quantity %}{% set body = dict(body, quantity=quantity | string) %}{% endif %}
+      {% if op_id is defined and op_id %}{% set body = dict(body, op_id=op_id) %}{% endif %}
+      {{ body | to_json }}
+
+  homebears_complete_chore:
+    url: "https://api.homebears.app/api/v1/circles/CIRCLE_ID/households/HOUSEHOLD_ID/cleaning-tasks/{{ task_id }}/complete"
+    method: post
+    headers:
+      Authorization: !secret homebears_authorization
+      Accept: application/json
+
+  homebears_open_chores_today:
+    url: "https://api.homebears.app/api/v1/circles/CIRCLE_ID/households/HOUSEHOLD_ID/occurrences?status=open&from={{ now().date() }}&to={{ now().date() }}&per_page=100"
+    method: get
+    headers:
+      Authorization: !secret homebears_authorization
+      Accept: application/json
+
+  homebears_complete_occurrence:
+    url: "https://api.homebears.app/api/v1/circles/CIRCLE_ID/households/HOUSEHOLD_ID/occurrences/{{ occurrence_id }}/complete"
+    method: post
+    headers:
+      Authorization: !secret homebears_authorization
+      Accept: application/json
+
+rest:
+  - resource: "https://api.homebears.app/api/v1/circles/CIRCLE_ID/shopping-lists/LIST_ID"
+    headers:
+      Authorization: !secret homebears_authorization
+      Accept: application/json
+    scan_interval: 300
+    sensor:
+      - name: "Groceries open items"
+        unique_id: homebears_groceries_open_items
+        icon: mdi:cart-outline
+        unit_of_measurement: items
+        state_class: measurement
+        value_template: "{{ value_json.data.open_count }}"
+        json_attributes_path: "$.data"
+        json_attributes:
+          - name
+          - checked_count
+          - updated_at
+
+  - resource_template: "https://api.homebears.app/api/v1/circles/CIRCLE_ID/households/HOUSEHOLD_ID/occurrences?status=open&from={{ now().date() }}&to={{ now().date() }}&per_page=100"
+    headers:
+      Authorization: !secret homebears_authorization
+      Accept: application/json
+    scan_interval: 900
+    sensor:
+      - name: "Chores open today"
+        unique_id: homebears_chores_open_today
+        icon: mdi:broom
+        unit_of_measurement: chores
+        value_template: "{{ value_json.meta.total }}"
+      - name: "Chores open today list"
+        unique_id: homebears_chores_open_today_list
+        icon: mdi:format-list-checks
+        value_template: "{{ (value_json.data | map(attribute='task.name') | join(', '))[:255] }}"
+
+script:
+  homebears_add_to_groceries:
+    alias: "Add to Homebears groceries"
+    icon: mdi:cart-plus
+    fields:
+      item:
+        description: "What to buy"
+        example: "Oat milk"
+        required: true
+        selector:
+          text:
+      quantity:
+        description: "How much (optional)"
+        example: "2"
+        selector:
+          text:
+    sequence:
+      - action: rest_command.homebears_add_item
+        data:
+          item: "{{ item }}"
+          quantity: "{{ quantity | default('') }}"
+
+input_button:
+  homebears_milk:
+    name: "We need milk"
+    icon: mdi:cup
+
+automation:
+  - id: homebears_milk_button
+    alias: "Homebears: milk button adds milk"
+    triggers:
+      - trigger: state
+        entity_id: input_button.homebears_milk
+    actions:
+      - action: rest_command.homebears_add_item
+        data:
+          item: "Milk"
+          # Same op id within one minute: a double press adds milk once.
+          op_id: "ha-milk-{{ now().strftime('%Y%m%d%H%M') }}"
+
+  - id: homebears_assist_add_item
+    alias: "Homebears: add items by voice"
+    triggers:
+      - trigger: conversation
+        command:
+          - "add {item} to homebears"
+          - "put {item} on the homebears list"
+    actions:
+      - action: script.homebears_add_to_groceries
+        data:
+          item: "{{ trigger.slots.item }}"
+      - set_conversation_response: "Added {{ trigger.slots.item }} to Homebears."
+
+  - id: homebears_laundry_done
+    alias: "Homebears: tick laundry when the washer finishes"
+    triggers:
+      - trigger: numeric_state
+        entity_id: sensor.washing_machine_power
+        below: 5
+        for: "00:02:00"
+    actions:
+      - action: rest_command.homebears_complete_chore
+        data:
+          task_id: LAUNDRY_TASK_ID
+
+  - id: homebears_vacuum_done
+    alias: "Homebears: tick today's vacuuming when the robot docks"
+    triggers:
+      - trigger: state
+        entity_id: vacuum.robot
+        from:
+          - cleaning
+          - returning
+        to: docked
+    actions:
+      - action: rest_command.homebears_open_chores_today
+        response_variable: chores
+      - variables:
+          occurrence_id: >-
+            {{ chores.content.data
+               | selectattr('cleaning_task_id', 'eq', 'VACUUM_TASK_ID')
+               | map(attribute='id') | first | default('') }}
+      - condition: template
+        value_template: "{{ occurrence_id != '' }}"
+      - action: rest_command.homebears_complete_occurrence
+        data:
+          occurrence_id: "{{ occurrence_id }}"

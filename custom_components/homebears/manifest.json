@@ -1,0 +1,12 @@
+{
+  "domain": "homebears",
+  "name": "Homebears",
+  "codeowners": ["@fuerst-one"],
+  "config_flow": true,
+  "documentation": "https://github.com/fuerst-one/homebears-ha",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/fuerst-one/homebears-ha/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}

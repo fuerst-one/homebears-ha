@@ -1,0 +1,20 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions: {}
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      # HACS installs the tagged source; a tag that disagrees with the manifest would report the wrong version.
+      - name: Check the tag matches the manifest version
+        run: |
+          version=$(jq -r .version custom_components/homebears/manifest.json)
+          test "${GITHUB_REF_NAME#v}" = "$version" || { echo "Tag $GITHUB_REF_NAME does not match manifest version $version"; exit 1; }

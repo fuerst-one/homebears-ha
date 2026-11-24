@@ -1,0 +1,39 @@
+add_shopping_item:
+  fields:
+    entity_id:
+      required: true
+      selector:
+        entity:
+          integration: homebears
+          domain: todo
+    item:
+      required: true
+      example: Oat milk
+      selector:
+        text:
+    quantity:
+      example: "2"
+      selector:
+        text:
+    op_id:
+      example: ha-milk-202611240800
+      selector:
+        text:
+
+complete_chore:
+  fields:
+    entity_id:
+      selector:
+        entity:
+          integration: homebears
+          domain: sensor
+    chore:
+      example: Take out the bins
+      selector:
+        text:
+    occurrence_id:
+      selector:
+        text:
+    credited_user_id:
+      selector:
+        text:

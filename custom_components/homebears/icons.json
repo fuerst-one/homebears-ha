@@ -1,0 +1,25 @@
+{
+  "entity": {
+    "sensor": {
+      "open_items": {
+        "default": "mdi:cart-outline"
+      },
+      "chores_open_today": {
+        "default": "mdi:broom"
+      }
+    },
+    "todo": {
+      "shopping_list": {
+        "default": "mdi:cart"
+      }
+    }
+  },
+  "services": {
+    "add_shopping_item": {
+      "service": "mdi:cart-plus"
+    },
+    "complete_chore": {
+      "service": "mdi:check-circle-outline"
+    }
+  }
+}

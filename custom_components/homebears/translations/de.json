@@ -1,0 +1,161 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Homebears verbinden",
+        "description": "Erstelle in der Homebears-App unter Einstellungen → API-Schlüssel einen persönlichen Schlüssel. Gib ihm `shopping:write` für die Einkaufslisten, `cleaning:write` für Aufgaben und `households:read`, damit die Einrichtung deine Haushalte auflisten kann.",
+        "data": {
+          "base_url": "API-Adresse",
+          "api_key": "API-Schlüssel"
+        },
+        "data_description": {
+          "base_url": "Nur ändern, wenn du einen eigenen Homebears-Server betreibst.",
+          "api_key": "Beginnt mit hb_. Wird nur einmal beim Erstellen angezeigt."
+        }
+      },
+      "circle": {
+        "title": "Kreis wählen",
+        "description": "Dieser Schlüssel erreicht mehrere Kreise. Jeder Kreis wird als eigener Eintrag hinzugefügt.",
+        "data": {
+          "circle_id": "Kreis"
+        }
+      },
+      "select": {
+        "title": "Auswählen, was angezeigt wird",
+        "description": "Jede Einkaufsliste wird zu einer To-do-Liste und einem Sensor für offene Artikel; jeder Haushalt bekommt einen Sensor mit den heute offenen Aufgaben.",
+        "data": {
+          "shopping_lists": "Einkaufslisten",
+          "households": "Haushalte"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Neuer API-Schlüssel",
+        "description": "Der API-Schlüssel für {circle} funktioniert nicht mehr (widerrufen, abgelaufen oder ersetzt). Erstelle in der Homebears-App einen neuen.",
+        "data": {
+          "api_key": "API-Schlüssel"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Homebears ist nicht erreichbar. Prüfe die API-Adresse und deine Verbindung.",
+      "invalid_auth": "Homebears hat diesen API-Schlüssel nicht angenommen.",
+      "invalid_key_format": "Ein Homebears-API-Schlüssel beginnt mit hb_.",
+      "nothing_selected": "Wähle mindestens eine Einkaufsliste oder einen Haushalt.",
+      "wrong_circle": "Dieser Schlüssel erreicht den Kreis dieses Eintrags nicht.",
+      "unknown": "Unerwarteter Fehler, siehe Protokoll.",
+      "invalid_url": "Gib eine http://- oder https://-Adresse ein."
+    },
+    "abort": {
+      "already_configured": "Dieser Kreis ist bereits eingerichtet.",
+      "no_circles": "Dieser Schlüssel erreicht keinen Kreis.",
+      "missing_scopes": "Dieser Schlüssel findet in diesem Kreis keine Einkaufsliste und keinen Haushalt: Entweder gibt es noch keine, oder ihm fehlen die Bereiche shopping, cleaning und households:read.",
+      "reauth_successful": "Der neue API-Schlüssel funktioniert.",
+      "cannot_connect": "Homebears ist nicht erreichbar. Prüfe die API-Adresse und deine Verbindung."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Auswählen, was angezeigt wird",
+        "data": {
+          "shopping_lists": "Einkaufslisten",
+          "households": "Haushalte"
+        }
+      }
+    },
+    "error": {
+      "nothing_selected": "Wähle mindestens eine Einkaufsliste oder einen Haushalt."
+    },
+    "abort": {
+      "cannot_connect": "Homebears ist nicht erreichbar. Prüfe die API-Adresse und deine Verbindung.",
+      "invalid_auth": "Homebears nimmt den API-Schlüssel nicht mehr an. Authentifiziere den Eintrag zuerst neu."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "open_items": {
+        "name": "Offene Artikel",
+        "unit_of_measurement": "Artikel"
+      },
+      "chores_open_today": {
+        "name": "Heute offene Aufgaben",
+        "unit_of_measurement": "Aufgaben"
+      }
+    }
+  },
+  "exceptions": {
+    "api_error": {
+      "message": "Homebears antwortete: {message}"
+    },
+    "connection_error": {
+      "message": "Homebears ist nicht erreichbar."
+    },
+    "auth_error": {
+      "message": "Homebears nimmt den API-Schlüssel nicht mehr an. Richte unter Einstellungen → Geräte & Dienste einen neuen ein."
+    },
+    "not_a_homebears_list": {
+      "message": "{entity_id} ist keine Homebears-Einkaufsliste."
+    },
+    "not_a_homebears_household": {
+      "message": "{entity_id} ist kein Homebears-Aufgabensensor."
+    },
+    "household_required": {
+      "message": "Es sind mehrere Haushalte eingerichtet; wähle den Aufgabensensor des Haushalts."
+    },
+    "chore_not_found": {
+      "message": "Keine Aufgabe mit dem Namen oder der ID „{chore}“ in {household}."
+    },
+    "chore_not_open_today": {
+      "message": "„{chore}“ ist heute in {household} nicht offen (schon erledigt, übersprungen oder nicht fällig)."
+    },
+    "item_not_found": {
+      "message": "{item} steht nicht (mehr) auf der Liste."
+    }
+  },
+  "services": {
+    "add_shopping_item": {
+      "name": "Einkaufsartikel hinzufügen",
+      "description": "Fügt einer Homebears-Einkaufsliste einen Artikel hinzu. Alle, die die Liste in der App offen haben, sehen ihn sofort.",
+      "fields": {
+        "entity_id": {
+          "name": "Einkaufsliste",
+          "description": "Die Homebears-To-do-Liste, zu der hinzugefügt wird."
+        },
+        "item": {
+          "name": "Artikel",
+          "description": "Was gekauft werden soll."
+        },
+        "quantity": {
+          "name": "Menge",
+          "description": "Wie viel, als freier Text (2, 500 g, 1 Packung)."
+        },
+        "op_id": {
+          "name": "Vorgangs-ID",
+          "description": "Macht den Aufruf wiederholbar: Homebears wendet dieselbe ID innerhalb von 24 Stunden nur einmal an. Nur Buchstaben, Ziffern und . _ : -, höchstens 64."
+        }
+      }
+    },
+    "complete_chore": {
+      "name": "Aufgabe erledigen",
+      "description": "Hakt eine Aufgabe ab. Bei einer geplanten Aufgabe wird das heute offene Vorkommen erledigt; eine Aufgabe nach Bedarf wird jetzt als erledigt eingetragen.",
+      "fields": {
+        "entity_id": {
+          "name": "Haushalt",
+          "description": "Der Sensor „Heute offene Aufgaben“ des Haushalts. Optional, wenn nur ein Haushalt eingerichtet ist."
+        },
+        "chore": {
+          "name": "Aufgabe",
+          "description": "Name oder ID der Aufgabe."
+        },
+        "occurrence_id": {
+          "name": "Vorkommens-ID",
+          "description": "Statt einer Aufgabe: ein Vorkommen, z. B. aus den Attributen des Aufgabensensors."
+        },
+        "credited_user_id": {
+          "name": "Gutschreiben an",
+          "description": "Benutzer-ID des Mitglieds, das die Punkte bekommt. Standard: der Besitzer des API-Schlüssels."
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,161 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect Homebears",
+        "description": "Create a personal API key in the Homebears app under Settings → API keys. Give it `shopping:write` for the shopping lists, `cleaning:write` for chores and `households:read` so this setup can list your households.",
+        "data": {
+          "base_url": "API address",
+          "api_key": "API key"
+        },
+        "data_description": {
+          "base_url": "Leave as is unless you run your own Homebears server.",
+          "api_key": "Starts with hb_. It is shown only once when you create it."
+        }
+      },
+      "circle": {
+        "title": "Choose a circle",
+        "description": "This key reaches several circles. Each circle is added as its own entry.",
+        "data": {
+          "circle_id": "Circle"
+        }
+      },
+      "select": {
+        "title": "Choose what to show",
+        "description": "Each shopping list becomes a to-do list and an open-items sensor; each household gets a sensor with the chores open today.",
+        "data": {
+          "shopping_lists": "Shopping lists",
+          "households": "Households"
+        }
+      },
+      "reauth_confirm": {
+        "title": "New API key",
+        "description": "The API key for {circle} no longer works (revoked, expired or replaced). Create a new one in the Homebears app.",
+        "data": {
+          "api_key": "API key"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not reach Homebears. Check the API address and your connection.",
+      "invalid_auth": "Homebears did not accept this API key.",
+      "invalid_key_format": "A Homebears API key starts with hb_.",
+      "nothing_selected": "Choose at least one shopping list or household.",
+      "wrong_circle": "This key cannot reach the circle of this entry.",
+      "unknown": "Unexpected error, see the log.",
+      "invalid_url": "Enter an http:// or https:// address."
+    },
+    "abort": {
+      "already_configured": "This circle is already set up.",
+      "no_circles": "This key does not reach any circle.",
+      "missing_scopes": "This key finds no shopping list or household in this circle to show: either there are none yet, or the key lacks the shopping, cleaning and households:read scopes.",
+      "reauth_successful": "The new API key works.",
+      "cannot_connect": "Could not reach Homebears. Check the API address and your connection."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Choose what to show",
+        "data": {
+          "shopping_lists": "Shopping lists",
+          "households": "Households"
+        }
+      }
+    },
+    "error": {
+      "nothing_selected": "Choose at least one shopping list or household."
+    },
+    "abort": {
+      "cannot_connect": "Could not reach Homebears. Check the API address and your connection.",
+      "invalid_auth": "Homebears no longer accepts the API key. Re-authenticate the entry first."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "open_items": {
+        "name": "Open items",
+        "unit_of_measurement": "items"
+      },
+      "chores_open_today": {
+        "name": "Chores open today",
+        "unit_of_measurement": "chores"
+      }
+    }
+  },
+  "exceptions": {
+    "api_error": {
+      "message": "Homebears answered: {message}"
+    },
+    "connection_error": {
+      "message": "Could not reach Homebears."
+    },
+    "auth_error": {
+      "message": "Homebears no longer accepts the API key. Set up a new one under Settings → Devices & services."
+    },
+    "not_a_homebears_list": {
+      "message": "{entity_id} is not a Homebears shopping list."
+    },
+    "not_a_homebears_household": {
+      "message": "{entity_id} is not a Homebears chores sensor."
+    },
+    "household_required": {
+      "message": "Several households are set up; pick the household's chores sensor."
+    },
+    "chore_not_found": {
+      "message": "No chore called or with the id \"{chore}\" in {household}."
+    },
+    "chore_not_open_today": {
+      "message": "\"{chore}\" is not open today in {household} (already done, skipped or not due)."
+    },
+    "item_not_found": {
+      "message": "{item} is not on the list (anymore)."
+    }
+  },
+  "services": {
+    "add_shopping_item": {
+      "name": "Add shopping item",
+      "description": "Adds an item to a Homebears shopping list. Everyone with the list open in the app sees it at once.",
+      "fields": {
+        "entity_id": {
+          "name": "Shopping list",
+          "description": "The Homebears to-do list to add to."
+        },
+        "item": {
+          "name": "Item",
+          "description": "What to buy."
+        },
+        "quantity": {
+          "name": "Quantity",
+          "description": "How much, as free text (2, 500 g, 1 pack)."
+        },
+        "op_id": {
+          "name": "Operation id",
+          "description": "Makes the call safe to repeat: Homebears applies the same id only once within 24 hours. Letters, digits and . _ : - only, at most 64."
+        }
+      }
+    },
+    "complete_chore": {
+      "name": "Complete chore",
+      "description": "Ticks off a chore. A scheduled chore completes today's open occurrence; an on-demand chore is logged as done now.",
+      "fields": {
+        "entity_id": {
+          "name": "Household",
+          "description": "The household's 'Chores open today' sensor. Optional when only one household is set up."
+        },
+        "chore": {
+          "name": "Chore",
+          "description": "The chore's name or id."
+        },
+        "occurrence_id": {
+          "name": "Occurrence id",
+          "description": "Instead of a chore: one occurrence, e.g. from the chores sensor's attributes."
+        },
+        "credited_user_id": {
+          "name": "Credit to",
+          "description": "User id of the member who gets the points. Default: the API key's owner."
+        }
+      }
+    }
+  }
+}
