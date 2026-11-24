@@ -274,7 +274,16 @@ async def test_an_address_that_is_not_http_is_refused(hass: HomeAssistant) -> No
     assert result["errors"] == {CONF_BASE_URL: "invalid_url"}
 
 
-@pytest.mark.parametrize("address", ["http://api.example.com/api/v1", "http://8.8.8.8/api/v1"])
+@pytest.mark.parametrize(
+    "address",
+    [
+        "http://api.example.com/api/v1",
+        "http://8.8.8.8/api/v1",
+        "http://[::ffff:8.8.8.8]/api/v1",
+        "http://[2002:808:808::1]/api/v1",
+        "http://[2001:0:4136:e378:8000:63bf:3fff:fdd2]/api/v1",
+    ],
+)
 async def test_plain_http_to_a_public_host_is_refused(hass: HomeAssistant, address: str) -> None:
     result = await hass.config_entries.flow.async_configure(
         (await start(hass))["flow_id"], {CONF_BASE_URL: address, CONF_API_KEY: API_KEY}

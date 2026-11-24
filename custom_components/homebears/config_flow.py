@@ -247,4 +247,7 @@ def _keeps_the_key_private(url: URL) -> bool:
         address = ipaddress.ip_address(host)
     except ValueError:
         return False
+    # 6to4 and Teredo count as private in Python but tunnel over the public internet.
+    if isinstance(address, ipaddress.IPv6Address) and (address.sixtofour or address.teredo):
+        return False
     return address.is_private or address.is_loopback or address.is_link_local
