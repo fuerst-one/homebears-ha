@@ -43,7 +43,8 @@
       "nothing_selected": "Choose at least one shopping list or household.",
       "wrong_circle": "This key cannot reach the circle of this entry.",
       "unknown": "Unexpected error, see the log.",
-      "invalid_url": "Enter an http:// or https:// address."
+      "invalid_url": "Enter an http:// or https:// address.",
+      "insecure_url": "Plain http sends the API key unencrypted; use https, or http only to a server in your home network."
     },
     "abort": {
       "already_configured": "This circle is already set up.",

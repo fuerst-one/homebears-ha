@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ipaddress
 import logging
 from collections.abc import Mapping
 from typing import Any
@@ -35,6 +36,7 @@ from .coordinator import HomebearsConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 
+LOCAL_SUFFIXES = (".local", ".internal", ".localhost", ".lan", ".home.arpa")
 KEY_PREFIX = "hb_"
 KEY_SELECTOR = TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD))
 
@@ -63,6 +65,8 @@ class HomebearsConfigFlow(ConfigFlow, domain=DOMAIN):
             api_key = user_input[CONF_API_KEY].strip()
             if URL(base_url).scheme not in ("http", "https"):
                 errors[CONF_BASE_URL] = "invalid_url"
+            elif not _keeps_the_key_private(URL(base_url)):
+                errors[CONF_BASE_URL] = "insecure_url"
             elif not api_key.startswith(KEY_PREFIX):
                 errors[CONF_API_KEY] = "invalid_key_format"
             else:
@@ -230,3 +234,17 @@ def _still_offered(selection: Mapping[str, Any], lists: Choices, households: Cho
         CONF_HOUSEHOLDS: {option["value"] for option in households or []},
     }
     return {key: [i for i in selection.get(key, []) if i in values] for key, values in offered.items() if values}
+
+
+def _keeps_the_key_private(url: URL) -> bool:
+    """https anywhere; plain http only within the home network, since the key would travel in cleartext."""
+    if url.scheme == "https":
+        return True
+    host = (url.host or "").lower()
+    if host == "localhost" or host.endswith(LOCAL_SUFFIXES):
+        return True
+    try:
+        address = ipaddress.ip_address(host)
+    except ValueError:
+        return False
+    return address.is_private or address.is_loopback or address.is_link_local

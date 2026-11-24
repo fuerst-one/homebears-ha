@@ -9,6 +9,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from pytest_homeassistant_custom_component.test_util.aiohttp import AiohttpClientMocker
 
 from custom_components.homebears.api import (
+    MAX_PAGES,
     HomebearsApiError,
     HomebearsAuthError,
     HomebearsClient,
@@ -176,3 +177,22 @@ async def test_empty_success_body_is_fine(client: HomebearsClient, aioclient_moc
     aioclient_mock.post(f"{LIST_URL}/items/i1/check", status=200, text="")
 
     await client.set_item_checked(CIRCLE_ID, LIST_ID, "i1", True)
+
+
+async def test_ids_cannot_escape_their_path_segment(
+    client: HomebearsClient, aioclient_mock: AiohttpClientMocker
+) -> None:
+    aioclient_mock.post(f"{HOUSEHOLD_URL}/occurrences/..%2F..%2Fx/complete", json={"data": {}})
+
+    await client.complete_occurrence(CIRCLE_ID, HOUSEHOLD_ID, "../../x")
+
+    assert str(aioclient_mock.mock_calls[0][1]) == f"{HOUSEHOLD_URL}/occurrences/..%2F..%2Fx/complete"
+
+
+async def test_paging_stops_at_a_hard_limit(client: HomebearsClient, aioclient_mock: AiohttpClientMocker) -> None:
+    aioclient_mock.get(f"{BASE_URL}/circles", json=page([circle()], 1, 10_000))
+
+    with pytest.raises(HomebearsApiError):
+        await client.get_circles()
+
+    assert len(aioclient_mock.mock_calls) == MAX_PAGES

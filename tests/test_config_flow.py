@@ -1,5 +1,6 @@
 """Tests for the Homebears config, options and reauth flows."""
 
+import pytest
 from homeassistant import config_entries
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import CONF_API_KEY
@@ -271,3 +272,34 @@ async def test_an_address_that_is_not_http_is_refused(hass: HomeAssistant) -> No
     )
 
     assert result["errors"] == {CONF_BASE_URL: "invalid_url"}
+
+
+@pytest.mark.parametrize("address", ["http://api.example.com/api/v1", "http://8.8.8.8/api/v1"])
+async def test_plain_http_to_a_public_host_is_refused(hass: HomeAssistant, address: str) -> None:
+    result = await hass.config_entries.flow.async_configure(
+        (await start(hass))["flow_id"], {CONF_BASE_URL: address, CONF_API_KEY: API_KEY}
+    )
+
+    assert result["errors"] == {CONF_BASE_URL: "insecure_url"}
+
+
+@pytest.mark.parametrize(
+    "address",
+    [
+        "http://localhost:8100/api/v1",
+        "http://127.0.0.1:8100/api/v1",
+        "http://192.168.1.20/api/v1",
+        "http://homebears.local/api/v1",
+        "http://host.docker.internal:8100/api/v1",
+    ],
+)
+async def test_plain_http_to_a_local_host_is_allowed(
+    hass: HomeAssistant, aioclient_mock: AiohttpClientMocker, address: str
+) -> None:
+    aioclient_mock.get(f"{address}/circles", json=page([]))
+
+    result = await hass.config_entries.flow.async_configure(
+        (await start(hass))["flow_id"], {CONF_BASE_URL: address, CONF_API_KEY: API_KEY}
+    )
+
+    assert result["reason"] == "no_circles"

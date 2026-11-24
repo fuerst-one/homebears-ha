@@ -43,7 +43,8 @@
       "nothing_selected": "Wähle mindestens eine Einkaufsliste oder einen Haushalt.",
       "wrong_circle": "Dieser Schlüssel erreicht den Kreis dieses Eintrags nicht.",
       "unknown": "Unerwarteter Fehler, siehe Protokoll.",
-      "invalid_url": "Gib eine http://- oder https://-Adresse ein."
+      "invalid_url": "Gib eine http://- oder https://-Adresse ein.",
+      "insecure_url": "Unverschlüsseltes http überträgt den API-Schlüssel im Klartext; nutze https oder http nur zu einem Server in deinem Heimnetz."
     },
     "abort": {
       "already_configured": "Dieser Kreis ist bereits eingerichtet.",

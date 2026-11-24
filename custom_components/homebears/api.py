@@ -4,10 +4,13 @@ from __future__ import annotations
 
 from datetime import date
 from typing import Any
+from urllib.parse import quote
 
 from aiohttp import ClientError, ClientResponse, ClientSession, ClientTimeout
 
 PER_PAGE = 100
+# 500 items is the largest list Homebears allows; this bounds a paging loop a broken server could keep going.
+MAX_PAGES = 50
 TIMEOUT = ClientTimeout(total=20)
 
 type Json = dict[str, Any]
@@ -55,10 +58,10 @@ class HomebearsClient:
         return await self._get_all("/circles")
 
     async def get_households(self, circle_id: str) -> list[Json]:
-        return await self._get_all(f"/circles/{circle_id}/households")
+        return await self._get_all(_path("circles", circle_id, "households"))
 
     async def get_shopping_lists(self, circle_id: str) -> list[Json]:
-        return await self._get_all(f"/circles/{circle_id}/shopping-lists")
+        return await self._get_all(_path("circles", circle_id, "shopping-lists"))
 
     async def get_items(self, circle_id: str, list_id: str) -> list[Json]:
         return await self._get_all(self._items(circle_id, list_id))
@@ -72,21 +75,21 @@ class HomebearsClient:
         )
 
     async def update_item(self, circle_id: str, list_id: str, item_id: str, fields: Json) -> Json:
-        return await self._request("PATCH", f"{self._items(circle_id, list_id)}/{item_id}", fields)
+        return await self._request("PATCH", self._items(circle_id, list_id) + _path(item_id), fields)
 
     async def set_item_checked(self, circle_id: str, list_id: str, item_id: str, checked: bool) -> Json:
         action = "check" if checked else "uncheck"
-        return await self._request("POST", f"{self._items(circle_id, list_id)}/{item_id}/{action}")
+        return await self._request("POST", self._items(circle_id, list_id) + _path(item_id, action))
 
     async def delete_item(self, circle_id: str, list_id: str, item_id: str) -> None:
-        await self._request("DELETE", f"{self._items(circle_id, list_id)}/{item_id}")
+        await self._request("DELETE", self._items(circle_id, list_id) + _path(item_id))
 
     async def get_chores(self, circle_id: str, household_id: str) -> list[Json]:
-        return await self._get_all(f"{self._household(circle_id, household_id)}/cleaning-tasks")
+        return await self._get_all(self._household(circle_id, household_id) + _path("cleaning-tasks"))
 
     async def get_open_occurrences(self, circle_id: str, household_id: str, day: date) -> list[Json]:
         return await self._get_all(
-            f"{self._household(circle_id, household_id)}/occurrences",
+            self._household(circle_id, household_id) + _path("occurrences"),
             {"status": "open", "from": day.isoformat(), "to": day.isoformat()},
         )
 
@@ -95,7 +98,7 @@ class HomebearsClient:
     ) -> Json:
         return await self._request(
             "POST",
-            f"{self._household(circle_id, household_id)}/occurrences/{occurrence_id}/complete",
+            self._household(circle_id, household_id) + _path("occurrences", occurrence_id, "complete"),
             _credit(credited_user_id),
         )
 
@@ -104,22 +107,22 @@ class HomebearsClient:
     ) -> Json:
         return await self._request(
             "POST",
-            f"{self._household(circle_id, household_id)}/cleaning-tasks/{chore_id}/complete",
+            self._household(circle_id, household_id) + _path("cleaning-tasks", chore_id, "complete"),
             _credit(credited_user_id),
         )
 
     @staticmethod
     def _items(circle_id: str, list_id: str) -> str:
-        return f"/circles/{circle_id}/shopping-lists/{list_id}/items"
+        return _path("circles", circle_id, "shopping-lists", list_id, "items")
 
     @staticmethod
     def _household(circle_id: str, household_id: str) -> str:
-        return f"/circles/{circle_id}/households/{household_id}"
+        return _path("circles", circle_id, "households", household_id)
 
     async def _get_all(self, path: str, params: dict[str, str] | None = None) -> list[Json]:
         rows: list[Json] = []
         page = 1
-        while True:
+        while page <= MAX_PAGES:
             body = await self._request(
                 "GET", path, params={**(params or {}), "page": str(page), "per_page": str(PER_PAGE)}
             )
@@ -130,6 +133,7 @@ class HomebearsClient:
             if page >= ((body.get("meta") or {}).get("last_page") or page):
                 return rows
             page += 1
+        raise HomebearsApiError(200, "too_many_pages", f"{path} has more than {MAX_PAGES} pages")
 
     async def _request(
         self, method: str, path: str, json: Json | None = None, params: dict[str, str] | None = None
@@ -167,3 +171,8 @@ async def _read(response: ClientResponse) -> Json:
 
 def _credit(credited_user_id: str | None) -> Json:
     return {"credited_user_id": credited_user_id} if credited_user_id else {}
+
+
+def _path(*segments: str) -> str:
+    """Each segment encoded on its own, so an id from a service call cannot reach another endpoint."""
+    return "".join("/" + quote(segment, safe="") for segment in segments)

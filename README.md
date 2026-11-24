@@ -41,7 +41,7 @@ Copy `custom_components/homebears` into your Home Assistant `config/custom_compo
    The key (`hb_…`) is shown only once.
 
 2. **Settings → Devices & services → Add integration → Homebears.** Paste the key (leave the API address as is
-   unless you run your own server), pick the circle if the key reaches several, then tick the shopping lists and
+   unless you run your own server; plain `http` is only accepted for addresses in your home network), pick the circle if the key reaches several, then tick the shopping lists and
    households to show. Each circle is its own entry; change the selection later under **Configure**.
 
 If the key is revoked or expires, Home Assistant shows a **re-authenticate** prompt on the entry; paste a new key there.
